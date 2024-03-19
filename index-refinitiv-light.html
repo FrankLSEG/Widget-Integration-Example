@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='ie=edge' />
+
+    <!-- Dependencies (required) -->
+    <script src='src/main.v2.0.0.js'></script>
+    <script src='src/sdk.v5.8.5.js'></script>
+
+    <!-- Widget JavaScript files (required) -->
+    <script src='src/runtime.js'></script>
+    <script src='src/shared.js'></script>
+    <script src='src/vendor-0~2~3~4~5~6~7~8~9~10~11~12~13~14~15~16~17~18~19~20~21~22~23~24~26.js'></script>
+    <script src='src/vendor-0~3~9~10~15~17~18~19~20~26.js'></script>
+    <script src='src/vendor-2~3~10~12~15~17~18~24~26.js'></script>
+    <script src='src/vendor-flags.js'></script>
+    <script src='src/WMarketList.js'></script>
+    <script src='src/vendor-0~9~14~20.js'></script>
+    <script src='src/WPriceChart.js'></script>
+
+    <!-- Vendor file for theme (required) -->
+    <link rel='stylesheet' href='WMarketList/WMarketList.v2.0.0.refinitiv-light.css' />
+    <link rel='stylesheet' href='WPriceChart/WPriceChart.v2.0.0.refinitiv-light.css' />
+
+    <!-- Widget Stylesheet files (required) -->
+    <link rel='stylesheet' href='vendor/vendor.v2.0.0.refinitiv-light.css' />
+
+    <!-- CSS Variable file for theme (required) -->
+    <link rel='stylesheet' href='vendor/refinitiv-light.v2.0.0.css' />
+
+    <style>@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:wght@100;400;500;600;700&display=swap');
+</style>
+
+    <title>Market List</title>
+  </head>
+
+  <body>
+    <div id='build-page-loader-wrapper'>
+      <div id='build-page-loader'></div>
+    </div>
+    <div class="page-header">
+      <span class="page-title" tabindex="0">Widget Integration Example</span>
+    </div>
+    <div class="page-content">
+      <div class="row">
+        <div class="col-sm container">
+          <div class="market-list-widget"></div>
+        </div>
+        <div class="col-sm container">
+          <div class="price-chart-widget"></div>
+        </div>
+      </div>
+    </div>
+    <div class="login-modal inactive" role="dialog">
+    <div class="login-modal-content">
+    <div class="title">Please sign in</div>
+    <form action="#" role="form">
+      <div class="form-field">
+        <label for="username">Username</label>
+        <input aria-label="Enter user name" type="text" id="username" />
+      </div>
+      <div class="form-field">
+        <label for="password">Password</label>
+        <input aria-label="Enter password" type="password" id="password" />
+      </div>
+      <div class="form-field">
+        <label for="product">Product</label>
+        <input aria-label="Enter product name" id="product" type="text" value="wlib" />
+      </div>
+      <div class="form-field adv-options">
+        <span for="advOptions">Advanced settings</span>
+        <input
+          onchange="enviromentChange(this)"
+          aria-label="Advanced settings"
+          id="advOptions"
+          type="checkbox"
+          value="false"
+        />
+      </div>
+      <div class="form-field" id="enviromentField">
+        <label for="environment">Environment</label>
+        <input aria-label="Enter environment name" id="environment" type="text" value="dory-staging.financial.com" />
+      </div>
+      <div class="error" role="alert">Incorrect username or password</div>
+      <div class="submit-button">
+        <button aria-label="Submit button" type="submit">Sign in</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+    <script>//Login Dialog scripts
+
+function getModal() {
+  return document.querySelector('.login-modal');
+}
+
+function getPageHeader() {
+  return document.querySelector('.page-header');
+}
+
+function getPageLoader() {
+  return document.querySelector('#build-page-loader-wrapper');
+}
+
+function getEnvironmentElement() {
+  return document.getElementById('enviromentField');
+}
+
+function getEnvironmentField() {
+  return document.getElementById('environment');
+}
+
+function getLoginForm() {
+  return document.querySelector('.login-modal form');
+}
+
+function getUsernameField() {
+  return document.querySelector('#username');
+}
+
+function getPasswordField() {
+  return document.querySelector('#password');
+}
+
+function getProductField() {
+  return document.querySelector('#product');
+}
+
+function getErrorMessage() {
+  return document.querySelector('.login-modal .error');
+}
+
+function enviromentChange(enviroment) {
+  let environmentElement = getEnvironmentElement();
+  if (enviroment.checked === true) {
+    environmentElement.style.display = 'block';
+  } else {
+    environmentElement.style.display = 'none';
+  }
+}
+
+function openLoginDialog() {
+  let modal = getModal();
+  let pageHeader = getPageHeader();
+  let pageLoader = getPageLoader();
+
+  modal.classList.remove('inactive');
+  modal.classList.add('active');
+  if (pageHeader) {
+    pageHeader.style.display = 'none';
+  }
+  if (pageLoader) {
+    pageLoader.style.display = 'none'; //hide loader
+  }
+}
+
+function closeLoginDialog() {
+  let modal = getModal();
+  let pageHeader = getPageHeader();
+  let pageLoader = getPageLoader();
+
+  if (modal.classList.contains('active')) {
+    modal.classList.remove('active');
+    modal.classList.add('inactive');
+    if (pageHeader) {
+      pageHeader.style.display = 'block';
+    }
+  }
+
+  setTimeout(function () {
+    if (pageHeader) {
+      pageHeader.querySelector('.page-title').focus();
+    }
+    modal.style.display = 'none';
+    if (pageLoader) {
+      pageLoader.style.display = 'none'; //hide loader
+    }
+  }, 500);
+}
+
+function setBasePath(path) {
+  let presetEnviroment = path;
+  if (!path) {
+    presetEnviroment = localStorage.getItem('base_path');
+  }
+  if (presetEnviroment) {
+    dory.config.setBasePath('https://' + presetEnviroment);
+  } else {
+    dory.config.setBasePath('https://dory-staging.financial.com');
+  }
+}
+
+function authenticate(initCallback) {
+  let stagingEnv = getEnvironmentField().value;
+  if (stagingEnv) {
+    setTimeout(() => {
+      localStorage.removeItem('base_path');
+      localStorage.setItem('base_path', stagingEnv);
+    });
+  }
+  setBasePath(getEnvironmentField().value);
+  let username = getUsernameField();
+  let password = getPasswordField();
+  let product = getProductField();
+  let errorMessage = getErrorMessage();
+
+  dory.ServiceAuth.login(username.value, password.value, product.value)
+    .then(function () {
+      closeLoginDialog();
+      initCallback();
+    })
+    .catch(function () {
+      errorMessage.style.visibility = 'visible';
+    });
+}
+
+function addSubmitListener(initCallback) {
+  this.getLoginForm().addEventListener('submit', function (event) {
+    event.preventDefault();
+    authenticate(initCallback);
+  });
+}
+</script>
+
+    <script>
+      function initWidget() {
+        window.marketList = window.fdc__widgets__.WMarketList.init('.market-list-widget', {
+          indexRic: '.DJI',
+          columns: [
+            {
+              headerName: 'Ticker',
+              field: 'x._TICKER',
+            },
+            {
+              headerName: 'Name',
+              field: 'q._DSPLY_NAME',
+              minWidth: 130,
+            },
+            {
+              headerName: 'Country',
+              renderer: 'countryFlag',
+            },
+            {
+              headerName: 'Price',
+              field: 'q._TRDPRC_1',
+            },
+            {
+              headerName: '+/-',
+              field: 'q._NETCHNG_1',
+            },
+            {
+              headerName: '%',
+              field: 'q._PCTCHNG',
+            },
+            {
+              headerName: 'Time',
+              field: 'q._TRDTIM_1',
+            },
+          ]
+        }, null, null, 'refinitiv-light');
+
+        window.priceChart = window.fdc__widgets__.WPriceChart.init('.price-chart-widget', {
+          ric: 'AAPL.O'
+        }, null, null, 'refinitiv-light');
+
+        marketList.onClick(function callBack(event) {
+          priceChart.setRic(event.ric);
+        });
+      }
+      setBasePath();
+      dory.ServiceAuth.isSessionValid().then(function (isSessionValid) {
+        if (isSessionValid === true) {
+          closeLoginDialog();
+          initWidget();
+        } else {
+          openLoginDialog();
+          addSubmitListener(initWidget);
+        }
+      });
+    </script>
+
+    <style>/* Body styles */
+/* Extra styles used for release visual regression */
+/* Should be removed when 1.43 is released */
+body {
+  margin: 8px !important;
+  font-size: unset !important;
+}
+
+.page-header {
+  height: 39px !important;
+  margin-bottom: unset !important;
+}
+
+.page-title {
+  display: block !important;
+}
+
+body {
+  padding: 20px;
+  font-size: 15px;
+  transition: background 1s;
+  transition: color 1s;
+}
+
+body.refinitiv-dark {
+  background-color: #161a1f;
+}
+
+body.refinitiv-light {
+  background-color: #fff;
+}
+
+.build-version {
+  display: flex;
+  justify-content: center;
+}
+
+.page-title,
+.build-version {
+  padding: 10px;
+  font-family: Fira Sans, sans-serif;
+  color: #212529;
+}
+
+body.refinitiv-dark .page-title,
+body.refinitiv-dark .build-version {
+  color: #ffffff;
+}
+
+.page-title:focus {
+  outline: none;
+}
+
+.page-header {
+  height: 32px;
+  margin-bottom: 20px;
+}
+
+.page-content hr {
+  border: none;
+}
+</style>
+    <style>/* Login Dialog styles */
+.login-modal {
+  position: fixed;
+  z-index: 2;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+}
+
+.login-modal.active {
+  animation: blowUpModal 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+.login-modal.inactive {
+  animation: blowDownModal 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+.login-modal-content {
+  background-color: #f7f8fa;
+  margin: auto;
+  border: 1px solid #e0e3eb;
+  width: 320px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 2px 2px 20px 0px rgb(0 0 0 / 20%);
+  font-family: 'Fira Sans', sans-serif;
+  font-size: 16px;
+}
+
+.login-modal-content .title {
+  font-size: 20px;
+  text-align: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e3eb;
+}
+
+.login-modal-content form {
+  padding: 0 20px 20px;
+}
+
+.login-modal-content form .form-field {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.login-modal-content form div:nth-of-type(3) {
+  margin-bottom: 0;
+}
+
+.login-modal-content form .form-field label {
+  color: #6e7077;
+}
+
+.login-modal-content form .form-field input {
+  height: 32px;
+  width: 100%;
+  padding-left: 10px;
+  font-size: 15px;
+  border: 1px solid #e0e3eb;
+  box-sizing: border-box;
+  color: #131722;
+  outline: none;
+}
+
+.login-modal-content form .form-field input#advOptions {
+  width: auto;
+  height: auto;
+  position: relative;
+  top: 2px;
+}
+
+.login-modal-content form #enviromentField {
+  display: none;
+}
+
+.login-modal-content form .adv-options span {
+  font-size: 12px;
+}
+
+.login-modal-content form .form-field input:disabled {
+  background-color: rgba(239, 239, 239, 0.9);
+}
+
+.login-modal-content form .error {
+  color: #eb0027;
+  visibility: hidden;
+  margin: 10px 0;
+  font-size: 12px;
+}
+
+.login-modal-content form .submit-button button {
+  font-family: 'Fira Sans', sans-serif;
+  height: 32px;
+  width: 100%;
+  background-color: #0077d9;
+  border-color: #0077d9;
+  text-transform: uppercase;
+  color: #ffffff;
+  border: none;
+  font-size: 16px;
+}
+
+.login-modal-content form .submit-button button:hover {
+  background-color: #0063b5;
+  border-color: #0063b5;
+}
+
+@media screen and (max-width: 425px) {
+  .login-modal-content {
+    width: 240px;
+  }
+}
+
+@keyframes blowUpModal {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes blowDownModal {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+#build-page-loader-wrapper {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  z-index: 100;
+}
+#build-page-loader {
+  position: fixed;
+  left: 45%;
+  top: 40%;
+  width: 100px;
+  height: 100px;
+  border: 10px solid #f3f3f3;
+  border-top: 10px solid #000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite, linear infinite;
+  background-color: #fff;
+  text-align: center;
+  line-height: 100px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+</style>
+
+  </body>
+
+</html>
