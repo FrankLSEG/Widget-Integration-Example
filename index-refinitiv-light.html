@@ -43,6 +43,10 @@
     <div class="page-header">
       <span class="page-title" tabindex="0">Widget Integration Example</span>
     </div>
+          <!-- 3-20-2024 This is where I put in radio buttons -->
+          <br><input type="radio" name="rdoRICVal" value=".DJI" onclick="displayRadioValue()">.DJI
+              <input type="radio" name="rdoRICVal" value=".RUT" onclick="displayRadioValue()">.RUT
+              <input type="radio" name="rdoRICVal" value=".FCHI" onclick="displayRadioValue()">.FCHI<br>
     <div class="page-content">
       <div class="row">
         <div class="col-sm container">
@@ -227,9 +231,12 @@ function addSubmitListener(initCallback) {
 </script>
 
     <script>
-      function initWidget() {
-        window.marketList = window.fdc__widgets__.WMarketList.init('.market-list-widget', {
-          indexRic: '.DJI',
+    // 3-20-2024 Default index  
+    rdoRICVal = '.RUT'
+
+    // 3-20-2024 Move Dictionary into variable
+    whatami = {
+          indexRic: rdoRICVal,
           columns: [
             {
               headerName: 'Ticker',
@@ -261,16 +268,51 @@ function addSubmitListener(initCallback) {
               field: 'q._TRDTIM_1',
             },
           ]
-        }, null, null, 'refinitiv-light');
+        }
+    
+    whatami2 = {
+          ric: rdoRICVal
+        }
 
-        window.priceChart = window.fdc__widgets__.WPriceChart.init('.price-chart-widget', {
-          ric: 'AAPL.O'
-        }, null, null, 'refinitiv-light');
+    // 3-20-2024 Test 1 
+    //console.log(rdoRICVal)
+    
+    // 3-20-2024 Test 2
+    //console.log(typeof(whatami))
+    
+    // Added 3-20-2024 FP
+        function displayRadioValue() {
+            var ele = document.getElementsByName('rdoRICVal');
+ 
+            for (i = 0; i < ele.length; i++) {
+                if (ele[i].checked)
+                    // document.getElementById("result").innerHTML
+                    //     = "Gender: " + ele[i].value;
+                    // console.log(ele[i].value)
+                    rdoRICVal = ele[i].value
+                    updateWidget();
+                    //console.log(rdoRICVal);
+            }
+        }
+    
+
+      function initWidget() {
+        // 3-20-2024 Test3
+        //console.log(typeof(rdoRICVal));
+        window.marketList = window.fdc__widgets__.WMarketList.init('.market-list-widget', whatami, null, null, 'refinitiv-light');
+
+        window.priceChart = window.fdc__widgets__.WPriceChart.init('.price-chart-widget', whatami2, null, null, 'refinitiv-light');
 
         marketList.onClick(function callBack(event) {
           priceChart.setRic(event.ric);
         });
       }
+      // 3-20-2024 - Try to update marketlist and pricechart widgets
+      function updateWidget() {
+        window.marketList.setIndexRic(rdoRICVal)
+        window.priceChart.setRic(rdoRICVal)
+      }
+ 
       setBasePath();
       dory.ServiceAuth.isSessionValid().then(function (isSessionValid) {
         if (isSessionValid === true) {
